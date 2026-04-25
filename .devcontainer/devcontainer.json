@@ -1,0 +1,21 @@
+{
+  "name": "Task Lattice Devenv",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "."
+  },
+  "containerEnv": {
+    "PATH": "$PATH:/workspaces/task-lattice/.venv/bin"
+  },
+  "workspaceFolder": "/workspaces/task-lattice",
+  "overrideCommand": false,
+  "remoteUser": "vscode",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "charliermarsh.ruff"
+      ]
+    }
+  }
+}
