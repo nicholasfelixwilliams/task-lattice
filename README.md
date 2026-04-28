@@ -17,7 +17,7 @@ Task Lattice's key features include:
 
 - **Broker Support** - Following brokers are supported:
     - Solace
-    - Kafka
+    - Kafka (Day 2)
 - **Queues** - Multiple queue/priority queue support
 - **Async** - Async tasks supported incl. execution in event loop
 - **Customisation** - Extensive customisation of queue, worker and tasks including:
@@ -55,7 +55,45 @@ TBD
 
 ### 📘 How to use
 
-TBD
+**Step 1 -** Define your Task Lattice application
+
+```python
+from task_lattice import TaskLattice, SolaceConnectionDetails, QueueDetails
+
+app = TaskLattice(
+    SolaceConnectionDetails(host="localhost", port=55555, vpn="default", username="admin", password="admin"),
+    TaskLatticeConfig(
+      queues=[
+        QueueConfig(name="default", topic="tasks.default"),
+      ], 
+      default_queue="default"
+    ),
+)
+```
+
+**Step 2 -** Define your tasks:
+
+```python
+@app.task
+def sync_function():
+  ...
+
+@app.task
+async def async_function():
+  ...
+```
+
+**Step 3 -** Enqueue a task:
+```python
+task = sync_function.create()
+
+app.enqueue(task)
+```
+
+**Step 4 -** Run a worker to process tasks:
+```python
+app.start_worker()
+```
 
 ---
 
