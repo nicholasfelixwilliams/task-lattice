@@ -1,13 +1,9 @@
-from task_lattice.broker.solace import SolaceBroker, SolaceConnectionDetails
+from task_lattice.brokers.solace import SolaceBroker, SolaceConnectionDetails
 
-    
+
 if __name__ == "__main__":
     conn = SolaceConnectionDetails(
-        host="localhost",
-        port=55555,
-        vpn="default",
-        username="admin",
-        password="admin"
+        host="localhost", port=55555, vpn="default", username="admin", password="admin"
     )
 
     broker = SolaceBroker(conn)
@@ -17,4 +13,3 @@ if __name__ == "__main__":
         broker.listen_to_queue("task_queue")
     finally:
         broker.disconnect()
-

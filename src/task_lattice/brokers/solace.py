@@ -6,17 +6,17 @@ from solace.messaging.receiver.message_receiver import MessageHandler
 from solace.messaging.resources.topic import Topic
 from solace.messaging.resources.queue import Queue
 
+
 @dataclass(frozen=True)
 class SolaceConnectionDetails:
     host: str
-    port: int 
+    port: int
     vpn: str
     username: str
     password: str
 
 
 class SolaceBroker:
-
     def __init__(self, connection_details: SolaceConnectionDetails):
         self.connection_details = connection_details
 
@@ -28,7 +28,9 @@ class SolaceBroker:
         }
 
         self.service = MessagingService.builder().from_properties(config).build()
-        self.publisher = self.service.create_persistent_message_publisher_builder().build()
+        self.publisher = (
+            self.service.create_persistent_message_publisher_builder().build()
+        )
 
     def connect(self):
         self.service.connect()
@@ -38,7 +40,7 @@ class SolaceBroker:
         self.publisher.terminate()
         self.service.disconnect()
 
-    def enqueue(self, message: dict, topic: str, priority: int):
+    def publish(self, message: dict, topic: str, priority: int):
         sol_topic = Topic.of(topic)
 
         msg_builder = self.service.message_builder()
@@ -47,7 +49,7 @@ class SolaceBroker:
 
         self.publisher.publish(msg, sol_topic)
 
-        print(f"Published {msg} to {sol_topic}")
+        # print(f"Published {msg} to {sol_topic}")
 
     def listen_to_queue(self, queue: str):
         q = Queue.durable_exclusive_queue(queue)
@@ -58,7 +60,7 @@ class SolaceBroker:
 
         async def process_message(payload: str):
             print("⚙️ Processing async:", payload)
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.01)
 
         # Proper handler class
         class MyHandler(MessageHandler):
