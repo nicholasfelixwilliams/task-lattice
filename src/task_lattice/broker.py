@@ -8,7 +8,7 @@ from solace.messaging.publisher.persistent_message_publisher import (
 )
 
 from .config import SolaceConnectionDetails
-from .task import Task, TaskInstance
+from .task import TaskInstance
 
 
 class SolaceBroker:
