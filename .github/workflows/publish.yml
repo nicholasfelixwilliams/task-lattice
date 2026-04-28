@@ -1,0 +1,66 @@
+name: Publish
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build Python Package
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.14"
+
+      - name: Restore Cache
+        uses: actions/cache@v4
+        with:
+          path: .uv
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+
+      - name: Build release distributions
+        run: uv build
+
+      - name: Upload distributions
+        uses: actions/upload-artifact@v5
+        with:
+          name: release-dists
+          path: dist/
+
+  pypi-publish:
+    name: Publish to PyPI
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    needs: build
+
+    environment:
+      name: pypi
+      url: https://pypi.org/project/task-lattice/
+
+    steps:
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.14"
+          enable-cache: false
+          
+      - name: Retrieve distributions
+        uses: actions/download-artifact@v6
+        with:
+          name: release-dists
+          path: dist/
+
+      - name: Publish to PyPI
+        env:
+          UV_PUBLISH_TOKEN: ${{ secrets.API_TOKEN }}
+        run: uv publish
