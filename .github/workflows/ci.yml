@@ -1,0 +1,115 @@
+name: CI
+
+on: 
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+jobs:
+  lint:
+    name: Lint / Static Checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.14"
+
+      - name: Restore Cache
+        uses: actions/cache@v4
+        with:
+          path: .uv
+          key: uv-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+      
+      - name: Install Dependencies
+        run: uv sync --locked --all-extras
+      
+      - name: Check for syntax errors
+        run: uv run ruff check . --output-format=github
+
+      - name: Check code formatting
+        run: uv run ruff format --check --diff .
+
+
+  build:
+    name: Build package
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    needs: lint
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Restore Cache
+        uses: actions/cache@v4
+        with:
+          path: .uv
+          key: uv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}
+      
+      - name: Install Dependencies
+        run: uv sync --locked --all-extras
+
+      - name: Build package
+        run: uv build
+
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    needs: build
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.14"
+          - "3.13"
+          - "3.12"
+    
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Restore Cache
+        uses: actions/cache@v4
+        with:
+          path: .uv
+          key: uv-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('uv.lock') }}
+      
+      - name: Install Dependencies
+        run: uv sync --locked --all-extras
+
+      - name: Run Unit Tests
+        run: uv run pytest tests --cov=src --cov-report=term-missing --cov-report=xml --cov-report=html
+
+      #- name: Enforce code coverage
+      #  run: uv run coverage report --fail-under=100
+
+      - name: Upload coverage HTML
+        if: matrix.python-version == '3.14'
+        uses: actions/upload-artifact@v5
+        with:
+          name: coverage-html
+          path: htmlcov
+          retention-days: 7
