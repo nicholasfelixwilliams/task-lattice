@@ -1,6 +1,6 @@
 [project]
 name = "task-lattice"
-version = "0.0.1a"
+version = "0.0.1a2"
 description = "Distributed Task Framework"
 readme = "README.md"
 authors = [
@@ -8,7 +8,7 @@ authors = [
 ]
 license = "MIT"
 license-files = ["LICENSE"]
-keywords = ["tasks", "workflow", "dag", "distributed-tasks"]
+keywords = ["tasks", "workflow", "dag", "distributed-tasks", "solace"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
@@ -32,4 +32,9 @@ dev = [
     "pytest-cov>=7.1.0",
     "ruff>=0.15.12",
     "solace-pubsubplus>=1.11.0",
+]
+
+[project.optional-dependencies]
+solace = [
+    "solace-pubsubplus>=1.11.0"
 ]

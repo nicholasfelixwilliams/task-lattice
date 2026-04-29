@@ -26,7 +26,7 @@ Task Lattice's key features include:
     - Worker concurrency
     - Queue capacity
     - ...
-- **Minimal code** - Minimal code is required to use task lattice
+- **Minimal code** - Minimal code is required to use task lattice in your project
 - **DAG support** - Supports DAG (directed acyclical graph) workflow execution
 - **Monitoring** - Supports live monitoring of the queues, workers, tasks
 
@@ -49,7 +49,10 @@ uv add task-lattice
 
 ### 📦 Dependencies
 
-TBD
+This project's dependencies are based on the broker used. They are minimal by design.
+
+**Solace**:
+ - <a href="https://docs.solace.com/API/Messaging-APIs/Python-API/python-home.htm" target="_blank">Solace Messaging</a> 
 
 ---
 
@@ -99,13 +102,7 @@ app.start_worker()
 
 ### 📘 Logging
 
-TBD
-
----
-
-### 📘 Extensions
-
-TBD
+Task Lattice uses the "task-lattice" logger. There are informational logs and also debugging logs.
 
 ---
 
