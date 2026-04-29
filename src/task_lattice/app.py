@@ -64,8 +64,13 @@ class TaskLattice:
         return decorator
 
     def enqueue(self, task: TaskInstance):
+        """Enqueues a task to be executed by a worker."""
         self.broker.publish(task)
 
     def start_worker(self):
+        """Starts a worker.
+
+        This will run until manually stopped.
+        """
         worker = Worker(self.broker, self._task_registry)
         worker.start()

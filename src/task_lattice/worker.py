@@ -1,10 +1,32 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 import logging
+import time
 
+from .task import Task
 from .broker import SolaceBroker
 
 log = logging.getLogger("task-lattice")
+
+
+def sync_wrapper(task: Task, args: list, kwargs: dict):
+    start_ts = time.perf_counter()
+
+    task.func(*args, **kwargs)
+
+    end_ts = time.perf_counter()
+
+    log.info(f"Task {task.name} completed in {end_ts - start_ts: .5f} seconds")
+
+
+async def async_wrapper(task: Task, args: list, kwargs: dict):
+    start_ts = time.perf_counter()
+
+    await task.func(*args, **kwargs)
+
+    end_ts = time.perf_counter()
+
+    log.info(f"Task {task.name} completed in {end_ts - start_ts: .5f} seconds")
 
 
 class Worker:
@@ -24,7 +46,7 @@ class Worker:
 
         try:
             self._event_loop.run_forever()
-        finally:
+        except (Exception, KeyboardInterrupt):
             self.shutdown()
 
     def shutdown(self):
@@ -42,10 +64,11 @@ class Worker:
 
         if task.is_async:
             asyncio.run_coroutine_threadsafe(
-                task.func(*message["args"], **message["kwargs"]), self._event_loop
+                async_wrapper(task, message["args"], message["kwargs"]),
+                self._event_loop,
             )
         else:
             self._event_loop.run_in_executor(
                 self._threadpool,
-                lambda: task.func(*message["args"], **message["kwargs"]),
+                lambda: sync_wrapper(task, message["args"], message["kwargs"]),
             )
