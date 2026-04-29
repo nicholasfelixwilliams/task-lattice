@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from typing import Callable
 
 from .config import TaskLatticeConfig
@@ -24,4 +25,9 @@ class TaskInstance:
 
     @property
     def message(self) -> dict:
-        return {"task_name": self.task_name, "args": self.args, "kwargs": self.kwargs}
+        return {
+            "task_name": self.task_name,
+            "args": self.args,
+            "kwargs": self.kwargs,
+            "creation_timestamp": datetime.now(tz=timezone.utc).isoformat(),
+        }

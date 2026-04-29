@@ -1,6 +1,7 @@
 from functools import cached_property
 import json
 from solace.messaging.messaging_service import MessagingService
+from solace.messaging.receiver.inbound_message import InboundMessage
 from solace.messaging.receiver.message_receiver import MessageHandler
 from solace.messaging.resources.topic import Topic
 from solace.messaging.resources.queue import Queue
@@ -58,8 +59,8 @@ class SolaceBroker:
             Queue.durable_exclusive_queue("task_queue")
         )
 
-        class MyHandler(MessageHandler):
-            def on_message(_, message):
+        class CusomMessageHandler(MessageHandler):
+            def on_message(self, message: InboundMessage):
                 payload = message.get_payload_as_string()
 
                 # deserialize
@@ -70,4 +71,4 @@ class SolaceBroker:
                 receiver.ack(message)
 
         receiver.start()
-        receiver.receive_async(MyHandler())
+        receiver.receive_async(CusomMessageHandler())

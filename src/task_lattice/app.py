@@ -1,5 +1,3 @@
-import asyncio
-from concurrent.futures import ThreadPoolExecutor
 from inspect import iscoroutinefunction
 import logging
 from typing import Callable
@@ -7,6 +5,7 @@ from typing import Callable
 from .broker import SolaceBroker
 from .config import SolaceConnectionDetails, TaskLatticeConfig
 from .task import Task, TaskInstance
+from .worker import Worker
 
 log = logging.getLogger(__name__)
 
@@ -17,9 +16,8 @@ class TaskLattice:
     def __init__(
         self, connection_details: SolaceConnectionDetails, config: TaskLatticeConfig
     ):
-        self.connection_details = connection_details
         self.config = config
-        self.broker = SolaceBroker(self.connection_details)
+        self.broker = SolaceBroker(connection_details)
 
         self._task_registry = {}
 
@@ -69,36 +67,5 @@ class TaskLattice:
         self.broker.publish(task)
 
     def start_worker(self):
-        loop = asyncio.get_event_loop()
-        asyncio.set_event_loop(loop)
-
-        executor = ThreadPoolExecutor()
-
-        def handle_message(message: dict):
-            task = self._task_registry.get(message["task_name"])
-
-            if task is None:
-                log.warning(f"Unknown task: {message['task_name']}")
-                return
-
-            if task.is_async:
-                asyncio.run_coroutine_threadsafe(
-                    task.func(*message["args"], **message["kwargs"]), loop
-                )
-            else:
-                loop.run_in_executor(
-                    executor,
-                    lambda: task.func(*message["args"], **message["kwargs"]),
-                )
-
-        # start broker consumer
-        self.broker.start_consumer(handle_message)
-
-        try:
-            log.info("Worker started")
-            loop.run_forever()
-        except (Exception, KeyboardInterrupt):
-            log.info("Shutting down...")
-            self.broker.disconnect()
-        finally:
-            loop.stop()
+        worker = Worker(self.broker, self._task_registry)
+        worker.start()
