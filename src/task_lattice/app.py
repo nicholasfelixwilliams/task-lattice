@@ -1,11 +1,14 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
 from inspect import iscoroutinefunction
+import logging
 from typing import Callable
 
 from .broker import SolaceBroker
 from .config import SolaceConnectionDetails, TaskLatticeConfig
 from .task import Task, TaskInstance
+
+log = logging.getLogger(__name__)
 
 
 class TaskLattice:
@@ -75,7 +78,7 @@ class TaskLattice:
             task = self._task_registry.get(message["task_name"])
 
             if task is None:
-                print(f"Unknown task: {message['task_name']}")
+                log.warning(f"Unknown task: {message['task_name']}")
                 return
 
             if task.is_async:
@@ -91,5 +94,11 @@ class TaskLattice:
         # start broker consumer
         self.broker.start_consumer(handle_message)
 
-        print("Worker started")
-        loop.run_forever()
+        try:
+            log.info("Worker started")
+            loop.run_forever()
+        except (Exception, KeyboardInterrupt):
+            log.info("Shutting down...")
+            self.broker.disconnect()
+        finally:
+            loop.stop()
