@@ -339,8 +339,13 @@ wheels = [
 
 [[package]]
 name = "task-lattice"
-version = "0.0.1a0"
+version = "0.0.1a2"
 source = { editable = "." }
+
+[package.optional-dependencies]
+solace = [
+    { name = "solace-pubsubplus" },
+]
 
 [package.dev-dependencies]
 dev = [
@@ -353,6 +358,8 @@ dev = [
 ]
 
 [package.metadata]
+requires-dist = [{ name = "solace-pubsubplus", marker = "extra == 'solace'", specifier = ">=1.11.0" }]
+provides-extras = ["solace"]
 
 [package.metadata.requires-dev]
 dev = [
