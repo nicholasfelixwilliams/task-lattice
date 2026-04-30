@@ -1,9 +1,9 @@
-from .app import SolaceBroker
+from .app import TaskLattice
 from .config import SolaceConnectionDetails, QueueConfig, TaskLatticeConfig
 
 __all__ = [
-    "SolaceBroker",
+    "TaskLattice",
+    "TaskLatticeConfig",
     "SolaceConnectionDetails",
     "QueueConfig",
-    "TaskLatticeConfig",
 ]

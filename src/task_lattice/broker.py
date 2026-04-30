@@ -59,7 +59,7 @@ class SolaceBroker:
             Queue.durable_exclusive_queue("task_queue")
         )
 
-        class CusomMessageHandler(MessageHandler):
+        class CustomMessageHandler(MessageHandler):
             def on_message(self, message: InboundMessage):
                 payload = message.get_payload_as_string()
 
@@ -71,4 +71,4 @@ class SolaceBroker:
                 receiver.ack(message)
 
         receiver.start()
-        receiver.receive_async(CusomMessageHandler())
+        receiver.receive_async(CustomMessageHandler())
