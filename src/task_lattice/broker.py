@@ -1,8 +1,11 @@
-from functools import cached_property
+from functools import cached_property, lru_cache
 import json
 from solace.messaging.messaging_service import MessagingService
 from solace.messaging.receiver.inbound_message import InboundMessage
 from solace.messaging.receiver.message_receiver import MessageHandler
+from solace.messaging.receiver.persistent_message_receiver import (
+    PersistentMessageReceiver,
+)
 from solace.messaging.resources.topic import Topic
 from solace.messaging.resources.queue import Queue
 from solace.messaging.publisher.persistent_message_publisher import (
@@ -37,6 +40,17 @@ class SolaceBroker:
 
         return publisher
 
+    @lru_cache
+    def get_receiver(self, queue: str) -> PersistentMessageReceiver:
+        self.ensure_connected()
+
+        receiver = self.service.create_persistent_message_receiver_builder().build(
+            Queue.durable_exclusive_queue(queue)
+        )
+        receiver.start()
+
+        return receiver
+
     def disconnect(self):
         self.service.disconnect()
 
@@ -54,10 +68,7 @@ class SolaceBroker:
         self.publisher.publish_await_acknowledgement(msg, Topic.of("tasks.default"))
 
     def start_consumer(self, handler):
-        self.ensure_connected()
-        receiver = self.service.create_persistent_message_receiver_builder().build(
-            Queue.durable_exclusive_queue("task_queue")
-        )
+        receiver = self.get_receiver("task_queue")
 
         class CustomMessageHandler(MessageHandler):
             def on_message(self, message: InboundMessage):
