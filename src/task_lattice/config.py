@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Literal
 
 
 @dataclass(frozen=True)
@@ -28,6 +29,8 @@ class TaskLatticeConfig:
     queues: list[QueueConfig]
 
     default_queue: str | None = None
+
+    serialization: Literal["json", "orjson", "pickle", "yaml", "toml"] = "json"
 
     def __post_init__(self):
         if len(self.queues) == 0:
