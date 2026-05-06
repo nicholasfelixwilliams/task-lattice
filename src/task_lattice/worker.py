@@ -43,7 +43,7 @@ class Worker:
         self,
         broker: SolaceBroker,
         task_registry,
-        target_queues: list[QueueConfig] | None = None,
+        target_queues: list[QueueConfig],
         max_concurrency: int = 100,
         worker_lifecycle=None,
         task_lifecycle=None,
@@ -67,10 +67,13 @@ class Worker:
 
     def start(self):
         """Entrypoint for a worker. Subscribes to the broker for incomming messages"""
-        self._broker.start_consumer(self._process_message)
+        log.info(f"Maximum Concurrency: {self._max_concurrency}")
+        log.info("Listening to Queues:")
+        for queue in self._target_queues:
+            log.info(f"\t- {queue.name} ({queue.topic})")
+            self._broker.start_consumer(queue, self._process_message)
 
         log.info("Worker started...")
-
         try:
             self._event_loop.run_forever()
         except (Exception, KeyboardInterrupt):

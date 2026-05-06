@@ -67,10 +67,16 @@ class TaskLattice:
         """Enqueues a task to be executed by a worker."""
         self.broker.publish(task)
 
-    def start_worker(self):
+    def start_worker(self, queues: list[str] | None = None):
         """Starts a worker.
 
         This will run until manually stopped.
         """
-        worker = Worker(self.broker, self._task_registry)
+        # If no queues are given, target all
+        target_queues = (
+            [q for q in self.config.queues if q.name in queues]
+            if queues
+            else self.config.queues
+        )
+        worker = Worker(self.broker, self._task_registry, target_queues=target_queues)
         worker.start()
