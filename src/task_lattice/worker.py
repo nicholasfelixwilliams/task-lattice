@@ -15,6 +15,7 @@ log = logging.getLogger("task-lattice")
 @contextmanager
 def timer(task: Task):
     """Context manager to time task and log time taken."""
+    log.info(f"Task {task.name} started")
     start_ts = time.perf_counter()
 
     yield
@@ -50,7 +51,7 @@ class Worker:
     ):
         self._broker = broker
         self._task_registry = task_registry
-        self._target_queues = target_queues  # TODO: Implement usage
+        self._target_queues = target_queues
         self._max_concurrency = max_concurrency
         self._worker_lifecycle = worker_lifecycle  # TODO: Implement usage
         self._task_lifecycle = task_lifecycle  # TODO: Implement usage
@@ -70,7 +71,7 @@ class Worker:
         log.info(f"Maximum Concurrency: {self._max_concurrency}")
         log.info("Listening to Queues:")
         for queue in self._target_queues:
-            log.info(f"\t- {queue.name} ({queue.topic})")
+            log.info(f"\t- {queue.name}  [topic={queue.topic}] [queue={queue.queue}]")
             self._broker.start_consumer(queue, self._process_message)
 
         log.info("Worker started...")

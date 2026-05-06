@@ -41,11 +41,11 @@ class SolaceBroker:
         return publisher
 
     @lru_cache
-    def get_receiver(self, queue: QueueConfig) -> PersistentMessageReceiver:
+    def get_receiver(self, queue: str) -> PersistentMessageReceiver:
         self.ensure_connected()
 
         receiver = self.service.create_persistent_message_receiver_builder().build(
-            Queue.durable_exclusive_queue(queue.queue)
+            Queue.durable_exclusive_queue(queue)
         )
         receiver.start()
 
@@ -68,7 +68,7 @@ class SolaceBroker:
         self.publisher.publish_await_acknowledgement(msg, Topic.of("tasks.default"))
 
     def start_consumer(self, queue: QueueConfig, handler):
-        receiver = self.get_receiver(queue)
+        receiver = self.get_receiver(queue.queue)
 
         class CustomMessageHandler(MessageHandler):
             def on_message(self, message: InboundMessage):
