@@ -17,11 +17,14 @@ class SolaceConnectionDetails:
 class QueueConfig:
     name: str
     priority_enabled: bool = False
-    topic: str | None = None
+    topic: str = None  # type: ignore
+    queue: str = None  # type: ignore
 
     def __post_init__(self):
         if self.topic is None:
             self.topic = f"task-lattice/queue/in/{self.name}"
+        if self.queue is None:
+            self.queue = self.name
 
 
 @dataclass
