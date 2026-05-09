@@ -44,7 +44,7 @@ class Worker:
         self._target_queues = target_queues
         self._max_concurrency = max_concurrency
         self._worker_lifecycle = worker_lifecycle  # TODO: Implement usage
-        self._task_lifecycle = task_lifecycle  # TODO: Implement usage
+        self._task_lifecycle = task_lifecycle
 
         # Configure event loop for tasks
         self._event_loop = asyncio.new_event_loop()
@@ -95,6 +95,13 @@ class Worker:
         async with self._concurrency_semaphore:
             with timer(task):
                 resolved_kwargs, stack = await resolve_dependencies(task.func, kwargs)
+
+                if self._task_lifecycle:
+                    if hasattr(self._task_lifecycle, "__aenter__"):
+                        await stack.enter_async_context(self._task_lifecycle)
+                    else:
+                        stack.enter_context(self._task_lifecycle)
+
                 async with stack:
                     if task.is_async:
                         await task.func(*args, **resolved_kwargs)
