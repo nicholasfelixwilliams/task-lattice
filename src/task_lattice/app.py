@@ -63,9 +63,11 @@ class TaskLattice:
 
         return decorator
 
-    def enqueue(self, task: TaskInstance):
+    def enqueue(self, task: TaskInstance, queue: str | None = None):
         """Enqueues a task to be executed by a worker."""
-        self.broker.publish(task)
+        queue = queue or self.config.default_queue
+        queue_config = next(q for q in self.config.queues if q.name == queue)
+        self.broker.publish(task, queue_config)
 
     def start_worker(self, queues: list[str] | None = None):
         """Starts a worker.

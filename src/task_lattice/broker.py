@@ -54,7 +54,7 @@ class SolaceBroker:
     def disconnect(self):
         self.service.disconnect()
 
-    def publish(self, task: TaskInstance):
+    def publish(self, task: TaskInstance, queue: QueueConfig):
         self.ensure_connected()
 
         # Build the message
@@ -65,7 +65,7 @@ class SolaceBroker:
         )
 
         # Publish the message
-        self.publisher.publish_await_acknowledgement(msg, Topic.of("tasks.default"))
+        self.publisher.publish_await_acknowledgement(msg, Topic.of(queue.topic))
 
     def start_consumer(self, queue: QueueConfig, handler):
         receiver = self.get_receiver(queue.queue)
