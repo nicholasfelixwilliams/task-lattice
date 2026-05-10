@@ -15,21 +15,32 @@
 ### 🚀 Key Features
 Task Lattice's key features include:
 
+- **Simple** - Fast to get started, easy to understand
 - **Broker Support** - Following brokers are supported:
     - Solace
-    - Kafka (Day 2)
 - **Queues** - Multiple queue/priority queue support
-- **Async** - Async tasks supported incl. execution in event loop
+- **Async** - Native async + sync task support 
+- **Dependencies** - Task dependency injection system
+- **Customisation** - Extensive customisation of queue, worker and tasks including:
+    - Worker & Task lifecycle
+- **Minimal code** - Minimal code is required to use task lattice in your project
+- **Performance** - High performant distribution of tasks thanks to Solace broker speeds
+
+
+Future plans:
+- **Broker Support** - Following brokers are supported:
+    - Kafka
+    - Redis
+    - RabbitMQ
+- **DAG support** - Supports DAG (directed acyclical graph) workflow execution
+- **Monitoring** - Supports live monitoring of the queues, workers, tasks
 - **Customisation** - Extensive customisation of queue, worker and tasks including:
     - Automated task retry
     - Dead letter queues
     - Worker concurrency
     - Queue capacity
     - ...
-- **Minimal code** - Minimal code is required to use task lattice in your project
-- **DAG support** - Supports DAG (directed acyclical graph) workflow execution
-- **Monitoring** - Supports live monitoring of the queues, workers, tasks
-
+  
 ---
 
 ### ℹ️ Installation
@@ -97,6 +108,12 @@ app.enqueue(task)
 ```python
 app.start_worker()
 ```
+
+For more documentation:
+ - <a href="https://github.com/nicholasfelixwilliams/task-lattice/tree/main/docs/BASIC-USAGE.md" target="_blank">Basic Usage</a>
+ - <a href="https://github.com/nicholasfelixwilliams/task-lattice/tree/main/docs/WORKERS.md" target="_blank">Workers</a>
+ - <a href="https://github.com/nicholasfelixwilliams/task-lattice/tree/main/docs/TASKS.md" target="_blank">Tasks</a>
+ - <a href="https://github.com/nicholasfelixwilliams/task-lattice/tree/main/docs/DEPENDENCIES.md" target="_blank">Dependency Injection</a>
 
 ---
 
