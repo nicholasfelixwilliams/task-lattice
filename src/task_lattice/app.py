@@ -1,17 +1,17 @@
 from inspect import iscoroutinefunction
 import logging
-from typing import Callable
+from typing import Callable, overload
 
 from .broker import SolaceBroker
 from .config import SolaceConnectionDetails, TaskLatticeConfig
-from .task import Task, TaskInstance
+from .task import TaskDefinition, TaskFunction, TaskInstance
 from .worker import Worker
 
 log = logging.getLogger(__name__)
 
 
 class TaskLattice:
-    _task_registry: dict[str, Task]
+    _task_registry: dict[str, TaskDefinition]
 
     def __init__(
         self, connection_details: SolaceConnectionDetails, config: TaskLatticeConfig
@@ -23,6 +23,24 @@ class TaskLattice:
 
     def close(self):
         self.broker.disconnect()
+
+    """Task Registration"""
+
+    @overload
+    def task(
+        self,
+        f: Callable,
+        *,
+        name: str | None = None,
+    ) -> TaskFunction: ...
+
+    @overload
+    def task(
+        self,
+        f: None = None,
+        *,
+        name: str | None = None,
+    ) -> Callable[[Callable], TaskFunction]: ...
 
     def task(self, f: Callable | None = None, *, name: str | None = None):
         """Decorator to register a python function as a TaskLattice task.
@@ -38,36 +56,35 @@ class TaskLattice:
             def function(): ...
         """
 
-        def decorator(func: Callable):
+        def decorator(func: Callable) -> TaskFunction:
             task_name = name or func.__name__
 
             if task_name in self._task_registry:
                 raise ValueError(f"Task {task_name} is already registered")
 
-            task = Task(name=task_name, func=func, is_async=iscoroutinefunction(func))
+            task = TaskDefinition(
+                name=task_name, func=func, is_async=iscoroutinefunction(func)
+            )
 
             self._task_registry[task.name] = task
 
-            # Attach TaskLattice methods
-            def create_task_instance(
-                args: list | None = None, kwargs: dict | None = None
-            ):
-                return TaskInstance(task.name, self.config, args or [], kwargs or {})
-
-            func.create = create_task_instance
-
-            return func
+            # Build TaskFunction object to return
+            return TaskFunction(func, task, self.config)
 
         if f is not None:
             return decorator(f)
 
         return decorator
 
+    """Task Execution"""
+
     def enqueue(self, task: TaskInstance, queue: str | None = None):
         """Enqueues a task to be executed by a worker."""
         queue = queue or self.config.default_queue
         queue_config = next(q for q in self.config.queues if q.name == queue)
         self.broker.publish(task, queue_config)
+
+    """Worker"""
 
     def start_worker(self, queues: list[str] | None = None):
         """Starts a worker.

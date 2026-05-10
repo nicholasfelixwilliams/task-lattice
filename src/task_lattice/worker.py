@@ -7,13 +7,13 @@ import time
 from .broker import SolaceBroker
 from .config import QueueConfig
 from .dependency import resolve_dependencies
-from .task import Task
+from .task import TaskDefinition
 
 log = logging.getLogger("task-lattice")
 
 
 @contextmanager
-def timer(task: Task):
+def timer(task: TaskDefinition):
     """Context manager to time task and log time taken."""
     log.info(f"Task {task.name} started")
     start_ts = time.perf_counter()
@@ -49,6 +49,7 @@ class Worker:
         # Configure event loop for tasks
         self._event_loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self._event_loop)
+        self._active_tasks: set[asyncio.Task] = set()
 
         # Configure semaphore for controlling concurrency
         self._concurrency_semaphore = asyncio.Semaphore(self._max_concurrency)
@@ -90,7 +91,7 @@ class Worker:
             self._event_loop,
         )
 
-    async def process_task(self, task: Task, args: list, kwargs: dict):
+    async def process_task(self, task: TaskDefinition, args: list, kwargs: dict):
         # Ensure concurrency capacity
         async with self._concurrency_semaphore:
             with timer(task):
