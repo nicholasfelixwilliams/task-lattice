@@ -28,23 +28,15 @@ class TaskLattice:
 
     @overload
     def task(
-        self,
-        f: Callable,
-        *,
-        name: str | None = None,
-        lifecycle=None
+        self, f: Callable, *, name: str | None = None, lifecycle=None
     ) -> TaskFunction: ...
 
     @overload
     def task(
-        self,
-        f: None = None,
-        *,
-        name: str | None = None,
-        lifecycle=None
+        self, f: None = None, *, name: str | None = None, lifecycle=None
     ) -> Callable[[Callable], TaskFunction]: ...
 
-    def task( # type: ignore
+    def task(  # type: ignore
         self, f: Callable | None = None, *, name: str | None = None, lifecycle=None
     ):
         """Decorator to register a python function as a TaskLattice task.
