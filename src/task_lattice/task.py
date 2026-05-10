@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Callable
+from typing import Callable, ContextManager, AsyncContextManager
 
 from .config import TaskLatticeConfig
 
@@ -16,6 +16,7 @@ class TaskDefinition:
     name: str
     func: Callable
     is_async: bool
+    lifeycle: AsyncContextManager | ContextManager | None = None
 
 
 class TaskInstance:

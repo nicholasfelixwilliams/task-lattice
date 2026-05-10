@@ -32,6 +32,7 @@ class TaskLattice:
         f: Callable,
         *,
         name: str | None = None,
+        lifecycle=None
     ) -> TaskFunction: ...
 
     @overload
@@ -40,9 +41,12 @@ class TaskLattice:
         f: None = None,
         *,
         name: str | None = None,
+        lifecycle=None
     ) -> Callable[[Callable], TaskFunction]: ...
 
-    def task(self, f: Callable | None = None, *, name: str | None = None):
+    def task( # type: ignore
+        self, f: Callable | None = None, *, name: str | None = None, lifecycle=None
+    ):
         """Decorator to register a python function as a TaskLattice task.
 
         This must be applied to every task (sync or async) in the following way:
@@ -63,7 +67,10 @@ class TaskLattice:
                 raise ValueError(f"Task {task_name} is already registered")
 
             task = TaskDefinition(
-                name=task_name, func=func, is_async=iscoroutinefunction(func)
+                name=task_name,
+                func=func,
+                is_async=iscoroutinefunction(func),
+                lifeycle=lifecycle,
             )
 
             self._task_registry[task.name] = task
@@ -86,7 +93,9 @@ class TaskLattice:
 
     """Worker"""
 
-    def start_worker(self, queues: list[str] | None = None):
+    def start_worker(
+        self, queues: list[str] | None = None, concurrency: int | None = None
+    ):
         """Starts a worker.
 
         This will run until manually stopped.
@@ -97,5 +106,12 @@ class TaskLattice:
             if queues
             else self.config.queues
         )
-        worker = Worker(self.broker, self._task_registry, target_queues=target_queues)
+        worker = Worker(
+            self.broker,
+            self._task_registry,
+            target_queues=target_queues,
+            max_concurrency=concurrency or self.config.worker_concurrency,
+            shutdown_grace_period=self.config.worker_shutdown_grace_period,
+            worker_lifecycle=self.config.worker_lifecycle,
+        )
         worker.start()

@@ -33,6 +33,10 @@ class TaskLatticeConfig:
 
     default_queue: str | None = None
 
+    worker_lifecycle = None
+    worker_concurrency: int | None = None
+    worker_shutdown_grace_period: int = 30  # in seconds
+
     serialization: Literal["json", "orjson", "pickle", "yaml", "toml"] = "json"
 
     def __post_init__(self):

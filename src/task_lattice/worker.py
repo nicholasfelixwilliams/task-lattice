@@ -37,16 +37,16 @@ class Worker:
         broker: SolaceBroker,
         task_registry,
         target_queues: list[QueueConfig],
-        max_concurrency: int = 100,
+        max_concurrency: int | None = None,
+        shutdown_grace_period: int | None = None,
         worker_lifecycle=None,
-        task_lifecycle=None,
     ):
         self._broker = broker
         self._task_registry = task_registry
         self._target_queues = target_queues
-        self._max_concurrency = max_concurrency
+        self._max_concurrency = max_concurrency or 100
+        self._shutdown_grace_period = shutdown_grace_period or 30
         self._worker_lifecycle = worker_lifecycle
-        self._task_lifecycle = task_lifecycle
         self._active = False
 
         # Configure event loop for tasks
@@ -119,7 +119,9 @@ class Worker:
 
         if self._active_tasks:
             log.info(f"Waiting for {len(self._active_tasks)} task to complete...")
-            _, pending = await asyncio.wait(self._active_tasks, timeout=30)
+            _, pending = await asyncio.wait(
+                self._active_tasks, timeout=self._shutdown_grace_period
+            )
 
             if pending:
                 log.warning(f"{len(pending)} tasks could not be completed in time")
@@ -166,11 +168,11 @@ class Worker:
             with timer(task):
                 resolved_kwargs, stack = await resolve_dependencies(task.func, kwargs)
 
-                if self._task_lifecycle:
-                    if hasattr(self._task_lifecycle, "__aenter__"):
-                        await stack.enter_async_context(self._task_lifecycle)
+                if task.lifeycle:
+                    if hasattr(task.lifeycle, "__aenter__"):
+                        await stack.enter_async_context(task.lifeycle)  # type: ignore
                     else:
-                        stack.enter_context(self._task_lifecycle)
+                        stack.enter_context(task.lifeycle)  # type: ignore
 
                 async with stack:
                     if task.is_async:
