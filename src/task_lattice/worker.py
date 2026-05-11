@@ -76,6 +76,7 @@ class Worker:
                     stack.enter_context(lifecycle_instance)
 
             log.info(f"Maximum Concurrency: {self._max_concurrency}")
+            log.info(f"Tasks Registered: {len(self._task_registry)}")
 
             log.info("Listening to Queues:")
             for queue in self._target_queues:
