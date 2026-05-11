@@ -7,7 +7,7 @@ from .config import SolaceConnectionDetails, TaskLatticeConfig
 from .task import TaskDefinition, TaskFunction, TaskInstance
 from .worker import Worker
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("task-lattice")
 
 
 class TaskLattice:
