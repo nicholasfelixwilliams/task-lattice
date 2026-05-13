@@ -13,6 +13,12 @@ class SolaceConnectionDetails:
     password: str
 
 
+@dataclass(frozen=True)
+class ConnectionDetails:
+    broker: Literal["solace", "in-memory"] = "solace"
+    config: SolaceConnectionDetails | None = None
+
+
 @dataclass
 class QueueConfig:
     name: str
