@@ -72,10 +72,13 @@ This project's dependencies are based on the broker used. They are minimal by de
 **Step 1 -** Define your Task Lattice application
 
 ```python
-from task_lattice import TaskLattice, SolaceConnectionDetails, QueueDetails
+from task_lattice import TaskLattice, ConnectionDetails, SolaceConnectionDetails, QueueDetails
 
 app = TaskLattice(
-    SolaceConnectionDetails(host="localhost", port=55555, vpn="default", username="admin", password="admin"),
+    ConnectionDetails(
+      broker="solace", 
+      config=SolaceConnectionDetails(host="localhost", port=55555, vpn="default", username="admin", password="admin")
+    ),
     TaskLatticeConfig(
       queues=[
         QueueConfig(name="default", topic="tasks.default"),

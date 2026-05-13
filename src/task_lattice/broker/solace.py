@@ -12,12 +12,14 @@ from solace.messaging.publisher.persistent_message_publisher import (
     PersistentMessagePublisher,
 )
 
-from .config import QueueConfig, SolaceConnectionDetails
-from .task import TaskInstance
+from task_lattice.broker.base import Broker
+from task_lattice.config import QueueConfig, SolaceConnectionDetails
+from task_lattice.task import TaskInstance
 
 
-class SolaceBroker:
+class SolaceBroker(Broker):
     def __init__(self, connection_details: SolaceConnectionDetails):
+        super().__init__(connection_details)
         config = {
             "solace.messaging.transport.host": f"tcp://{connection_details.host}:{connection_details.port}",
             "solace.messaging.service.vpn-name": connection_details.vpn,
@@ -50,6 +52,9 @@ class SolaceBroker:
         receiver.start()
 
         return receiver
+
+    def connect(self):
+        self.ensure_connected()
 
     def disconnect(self):
         self.service.disconnect()

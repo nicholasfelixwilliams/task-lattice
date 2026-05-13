@@ -3,12 +3,13 @@
 The following minimal example shows how to configure a Task Lattice application with Solace as a broker.
 
 ```py
-from task_lattice import TaskLattice, Depends,  SolaceConnectionDetails, TaskLatticeConfig, QueueConfig
+from task_lattice import TaskLattice, Depends, ConnectionDetails, SolaceConnectionDetails, TaskLatticeConfig, QueueConfig
 
 
 app = TaskLattice(
-    SolaceConnectionDetails(
-        host="localhost", port=55555, vpn="default", username="admin", password="admin"
+    ConnectionDetails(
+      broker="solace", 
+      config=SolaceConnectionDetails(host="localhost", port=55555, vpn="default", username="admin", password="admin")
     ),
     TaskLatticeConfig(
         queues=[QueueConfig(name="default")],

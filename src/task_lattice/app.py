@@ -2,8 +2,8 @@ from inspect import iscoroutinefunction
 import logging
 from typing import Callable, overload
 
-from .broker import SolaceBroker
-from .config import SolaceConnectionDetails, TaskLatticeConfig
+from .broker import BROKERS
+from .config import ConnectionDetails, TaskLatticeConfig
 from .task import TaskDefinition, TaskFunction, TaskInstance
 from .worker import Worker
 
@@ -14,10 +14,10 @@ class TaskLattice:
     _task_registry: dict[str, TaskDefinition]
 
     def __init__(
-        self, connection_details: SolaceConnectionDetails, config: TaskLatticeConfig
+        self, connection_details: ConnectionDetails, config: TaskLatticeConfig
     ):
         self.config = config
-        self.broker = SolaceBroker(connection_details)
+        self.broker = BROKERS[connection_details.broker](connection_details.config)  # type: ignore
 
         self._task_registry = {}
 
