@@ -8,7 +8,7 @@ def test_sync_task(app):
 
     assert not task.is_async
     assert task.name == "function"
-    assert task.lifeycle is None
+    assert task.lifecycle is None
 
 
 def test_async_task(app):
@@ -21,7 +21,7 @@ def test_async_task(app):
 
     assert task.is_async
     assert task.name == "function"
-    assert task.lifeycle is None
+    assert task.lifecycle is None
 
 
 def test_sync_task_with_options(app):
@@ -34,7 +34,7 @@ def test_sync_task_with_options(app):
 
     assert not task.is_async
     assert task.name == "something.unique"
-    assert task.lifeycle is None
+    assert task.lifecycle is None
 
 
 def test_async_task_with_options(app):
@@ -47,4 +47,4 @@ def test_async_task_with_options(app):
 
     assert task.is_async
     assert task.name == "something.unique"
-    assert task.lifeycle is None
+    assert task.lifecycle is None
