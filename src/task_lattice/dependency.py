@@ -1,5 +1,6 @@
 from contextlib import AsyncExitStack
 import inspect
+from typing import Callable
 
 
 class Depends:
@@ -15,7 +16,7 @@ class Depends:
         ...
     """
 
-    def __init__(self, dependency):
+    def __init__(self, dependency: Callable):
         self.dependency = dependency
 
 

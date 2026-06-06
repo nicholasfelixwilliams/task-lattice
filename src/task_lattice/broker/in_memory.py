@@ -1,6 +1,8 @@
 from collections import defaultdict
 import json
-from queue import PriorityQueue
+import threading
+from typing import Callable
+from queue import Empty, PriorityQueue
 
 from task_lattice.broker.base import Broker
 from task_lattice.config import QueueConfig
@@ -15,28 +17,36 @@ class InMemoryBroker(Broker):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
-        # Create the in memory queues
-        self.queues: dict[str, PriorityQueue] = defaultdict(lambda: PriorityQueue())
+        self._queues: dict[str, PriorityQueue] = defaultdict(PriorityQueue)
+        self._stop_event = threading.Event()
+        self._consumer_threads: list[threading.Thread] = []
 
     def connect(self):
-        pass  # No connection needed
+        self._stop_event.clear()
 
     def disconnect(self):
-        pass  # No connection needed
+        self._stop_event.set()
+        for thread in self._consumer_threads:
+            thread.join(timeout=1)
+        self._consumer_threads.clear()
 
     def publish(self, task: TaskInstance, queue: QueueConfig):
-        q = self.queues[queue.name]
-        message = json.dumps(task.message)
+        self._queues[queue.name].put((task.priority, json.dumps(task.message)))
 
-        q.put((task.priority, message))
+    def start_consumer(self, queue: QueueConfig, handler: Callable[[dict], None]):
+        q = self._queues[queue.name]
 
-    def start_consumer(self, queue: QueueConfig, handler):
-        q = self.queues[queue.name]
+        def _consume():
+            while not self._stop_event.is_set():
+                try:
+                    _, payload = q.get(timeout=0.1)
+                    handler(json.loads(payload))
+                    q.task_done()
+                except Empty:
+                    continue
 
-        while True:
-            payload = q.get()
-            message = json.loads(payload)
-
-            handler(message)
-            q.task_done()
+        thread = threading.Thread(
+            target=_consume, daemon=True, name=f"consumer-{queue.name}"
+        )
+        thread.start()
+        self._consumer_threads.append(thread)

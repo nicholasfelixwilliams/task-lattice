@@ -1,9 +1,11 @@
 from .app import TaskLattice
 from .config import (
+    BrokerConnectionConfig,
     ConnectionDetails,
-    SolaceConnectionDetails,
     QueueConfig,
+    SolaceConnectionDetails,
     TaskLatticeConfig,
+    TaskRetryConfig,
 )
 from .dependency import Depends
 
@@ -13,5 +15,7 @@ __all__ = [
     "ConnectionDetails",
     "SolaceConnectionDetails",
     "QueueConfig",
+    "BrokerConnectionConfig",
+    "TaskRetryConfig",
     "Depends",
 ]
