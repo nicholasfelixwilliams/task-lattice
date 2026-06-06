@@ -12,61 +12,72 @@ Tasks can be:
 
 ## Defining a Task
 
-Tasks are registered using the `@app.task` decorator.
+Use the `@app.task` decorator on any sync or async function:
 
 ```py
 @app.task
-async def send_email():
-    print("Sending email")
+async def send_email(to: str, subject: str):
+    print(f"Sending '{subject}' to {to}")
 
 @app.task
 def compile_report(date: str):
-    print("Compiling report")
+    print(f"Compiling report for {date}")
 ```
 
 Both sync and async tasks are supported automatically. Tasks can support args and kwargs provided they can be serialised using the serialisation type you have chosen (default json).
 
-## Naming tasks
+## Custom Task Names
 
-Tasks are given a default name, but this can be explicitly set using a custom name:
+Tasks are named after their function by default. You can override this:
 
 ```py
-@app.task(name="tasks.email")
-async def send_email():
-    print("Sending email")
+@app.task(name="email.send")
+async def send_email(to: str):
+    ...
 ```
 
-**Note** - Names must be unique.
+Task names must be unique across the application.
 
 ## Task Lifecycle
 
-Tasks can be given a lifecycle context manager. This will be applied upon execution by the worker.
+A lifecycle context manager can be attached to a task. It is entered every time that task is executed by a worker — useful for profiling, tracing, or per-execution resource management.
 
 ```py
+from contextlib import contextmanager
+
 @contextmanager
 def profiling():
-    print("Starting profiling")
-
+    print("Profiling start")
     yield
+    print("Profiling end")
 
-    print("Stopping profiling")
-
-@app.task(lifecycle=profiling)
-async def send_email():
-    print("Sending email")
+@app.task(lifecycle=profiling())
+async def send_email(to: str):
+    ...
 ```
 
-We support both sync and async context managers.
+Both sync (`contextmanager`) and async (`asynccontextmanager`) context managers are supported.
+
+## Automatic Retry
+
+Tasks can be configured to retry automatically on failure using `TaskRetryConfig`.
+
+By default, Task Lattice retries on any `Exception`. Use `retry_on` to limit
+retries to specific exception types.
+
+This config can be set at definition level and instance level.
 
 ## Creating a Task Instance
 
-When you define a task in code you create a "Task Function" (by using the decorator). This automatically registers a "Task Definition" in your application. To send a task to a worker you need to create a "Task Instance". 
+Calling `@app.task` wraps the function in a `TaskFunction` and registers it
+with the application. To dispatch it for execution you must create a
+`TaskInstance`:
 
 ```py
-task_instance = send_email.create()
+task_instance = send_email.create(kwargs={"to": "alice@example.com"})
 ```
 
-Once you have the Task Instanc you can send it to the broker to be executed by a worker:
+Then enqueue it:
 
 ```py
 app.enqueue(task_instance)
@@ -81,4 +92,7 @@ task_instance = send_email.create(queue="emails")
 
 # Customise arguments
 task_instance = send_email.create(args=[1,2,3], kwargs={"a": 1})
+
+# Customise priority
+task_instance = send_email.create(kwargs={"to": "ceo@example.com"}, priority=1)
 ```

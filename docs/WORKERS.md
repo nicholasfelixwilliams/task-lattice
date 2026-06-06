@@ -1,33 +1,29 @@
 # Workers
 
-Workers are long-running processes responsible for consuming and executing tasks from configured queues.
+Workers are long-running processes that consume task messages from one or more queues and execute them concurrently.
 
 A worker:
-- Connects to the configured broker
+- Connects to the configured broker (with automatic retry)
 - Listens for incoming task messages
-- Executes tasks concurrently
-- Handles graceful shutdown
-- Supports sync and async tasks
-- Supports task and worker lifecycle hooks
+- Executes tasks concurrently up to the configured limit
+- Handles graceful shutdown on SIGINT / SIGTERM
+- Supports sync and async tasks natively
+- Supports worker and task lifecycle hooks
 
 ## Starting a Worker
 
-Workers are started from a `TaskLattice` application instance.
-
 ```py
-from .your_app import app
+from your_app import app
 
 app.start_worker()
 ```
 
-By default this will listen to all configured queues.
+This blocks until the worker is stopped. By default it listens on all configured queues.
 
-## Listening to Specific Queues
-
-You can target only specific queues by referencing their name (as configured in your Task Lattice app):
+## Targeting Specific Queues
 
 ```py
-app.start_worker(queues=["emails", "report"])
+app.start_worker(queues=["emails", "reports"])
 ```
 
 ## Concurrency
@@ -40,28 +36,36 @@ You can configure the maximum concurrency of a worker either in the Task Lattice
 app = TaskLattice(
     connection_details=...,
     config=TaskLatticeConfig(
-        worker_concurrency=100,
+        worker_concurrency=50,
         ...
     ),
 )
 
-app.start_worker(concurrency=100)
+# Or per-worker (overrides the config value)
+app.start_worker(concurrency=20)
 ```
-
-If no value is provided, this will default to 100.
 
 ## Shutdown
 
-Workers support graceful shutdown using:
- - SIGINT (Ctrl+C)
- - SIGTERM (Kubernetes / container shutdown)
+Workers respond to:
+- **SIGINT** (`Ctrl+C` in a terminal)
+- **SIGTERM** (sent by Kubernetes, Docker, systemd, etc.)
 
-During shutdown the worker will:
- - Stop consuming new messages
- - Wait for running tasks to complete
- - Shut down cleanly
+On receiving a shutdown signal the worker will:
 
-By default workers wait up to 30 seconds for running tasks to finish. This can be configured using the "worker_shutdown_grace_period" config.
+1. Stop accepting new messages from the broker.
+2. Wait for all in-flight tasks to complete.
+3. Run worker lifecycle cleanup (database pool teardown, etc.).
+4. Exit.
+
+By default the worker waits up to **30 seconds** for in-flight tasks. Tasks that exceed the grace period are abandoned with a warning.
+
+```py
+TaskLatticeConfig(
+    worker_shutdown_grace_period=60,  # seconds
+    ...
+)
+```
 
 ## Worker Lifecycle
 
@@ -77,41 +81,43 @@ Worker lifecycles can be sync or async context managers.
 ```py
 from contextlib import asynccontextmanager
 
-
 @asynccontextmanager
 async def lifecycle():
-    print("Worker starting")
+    pool = await create_db_pool()
+    print("Worker starting — pool ready")
 
     yield
 
-    print("Worker shutting down")
+    await pool.close()
+    print("Worker stopping — pool closed")
 
 app = TaskLattice(
     connection_details=...,
     config=TaskLatticeConfig(
-        worker_lifecycle=lifecycle,
+        worker_lifecycle=lifecycle(),
         ...
     ),
 )
 ```
 
+Both sync (`contextmanager`) and async (`asynccontextmanager`) context managers are supported.
+
 ## Task Execution Flow
 
-The following steps occur when a task is executed:
-1. A worker receives a task message from the broker
-2. The task is scheduled on the worker event loop
-3. Concurrency limits are applied
-4. Dependencies are resolved
-5. Task lifecycle hooks are entered
-6. The task is executed
-7. Lifecycle hooks are cleaned up
-8. Task completion is logged
+When a task message is received the following happens in order:
 
-## Worker Logging
+1. The message is deserialised and the task looked up in the registry.
+2. The task is scheduled on the worker event loop.
+3. The concurrency semaphore is acquired (blocks if at the limit).
+4. Dependencies are resolved via `Depends`.
+5. The task lifecycle context manager (if any) is entered.
+6. The task function is executed (sync tasks run in a thread pool).
+7. The task lifecycle is cleaned up.
+8. The semaphore is released.
+9. Execution time is logged.
 
-Workers automatically log:
-- Worker startup
-- Queue subscriptions
-- Task execution timing
-- Shutdown events
-- Unknown task warnings
+If the task raises an exception, it is logged (with a full traceback) and the worker continues processing subsequent messages.
+
+## Logging
+
+Workers emit structured log messages under the `task-lattice` logger.
