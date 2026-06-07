@@ -35,3 +35,21 @@ def test_instance_retry_overrides_definition_retry(app: TaskLattice):
     override = TaskRetryConfig(max_retries=5)
     instance = my_task.create(retry=override)
     assert instance.max_retries == 5
+
+
+def test_loading_from_message(app: TaskLattice):
+    @app.task
+    def my_task(): ...
+
+    original = my_task.create()
+    new = TaskInstance.from_message(original.message)
+
+    assert new.task_name == original.task_name
+    assert new.args == original.args
+    assert new.kwargs == original.kwargs
+    assert new.priority == original.priority
+    assert new.attempt == original.attempt
+    assert new.max_retries == original.max_retries
+    assert new.retry_on == original.retry_on
+    assert new.queue == original.queue
+    assert new.creation_timestamp == original.creation_timestamp
