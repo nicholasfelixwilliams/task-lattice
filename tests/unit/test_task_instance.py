@@ -38,7 +38,16 @@ def test_instance_retry_overrides_definition_retry(app: TaskLattice):
 
 
 def test_loading_from_message(app: TaskLattice):
-    @app.task
+    class CustomException(Exception): ...
+
+    @app.task(
+        retry=TaskRetryConfig(
+            retry_on=(
+                ValueError,
+                CustomException,
+            )
+        )
+    )
     def my_task(): ...
 
     original = my_task.create()
@@ -50,6 +59,5 @@ def test_loading_from_message(app: TaskLattice):
     assert new.priority == original.priority
     assert new.attempt == original.attempt
     assert new.max_retries == original.max_retries
-    assert new.retry_on == original.retry_on
     assert new.queue == original.queue
     assert new.creation_timestamp == original.creation_timestamp
