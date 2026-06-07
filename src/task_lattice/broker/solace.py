@@ -73,6 +73,7 @@ class SolaceBroker(Broker):
 
     @cached_property
     def publisher(self) -> PersistentMessagePublisher:
+        self.connect()
         publisher = self.service.create_persistent_message_publisher_builder().build()
         publisher.start()
         return publisher
