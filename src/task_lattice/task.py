@@ -139,9 +139,3 @@ class TaskFunction:
             max_retries=effective_retry.max_retries if effective_retry else 0,
             retry_on=effective_retry.retry_on if effective_retry else (Exception,),
         )
-
-    def __call__(self, *args, **kwargs):
-        raise TypeError(
-            f"Task '{self.task_def.name}' cannot be called directly. "
-            "Use .create() to build a TaskInstance and enqueue it via app.enqueue()."
-        )
