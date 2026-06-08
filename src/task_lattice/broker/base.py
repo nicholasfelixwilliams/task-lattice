@@ -40,9 +40,8 @@ class Broker(ABC):
                 attempt += 1
 
                 if config.max_retries != -1 and attempt > config.max_retries:
-                    raise ConnectionError(
-                        f"Failed to connect to broker after {attempt} attempt(s)"
-                    ) from exc
+                    log.error(f"Failed to connect to broker after {attempt} attempt(s)")
+                    exit(1)
 
                 backoff = min(
                     config.backoff_base * (2 ** (attempt - 1)), config.backoff_max
