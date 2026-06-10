@@ -90,13 +90,14 @@ class Worker:
 
     async def _start(self):
         async with AsyncExitStack() as stack:
+            log.info("Starting worker process")
+            self._broker.connect_with_retry(self._connection_config)
+
             if self._worker_lifecycle:
                 if hasattr(self._worker_lifecycle, "__aenter__"):
                     await stack.enter_async_context(self._worker_lifecycle)
                 else:
                     stack.enter_context(self._worker_lifecycle)
-
-            self._broker.connect_with_retry(self._connection_config)
 
             log.info(f"Maximum concurrency: {self._max_concurrency}")
             log.info(f"Tasks registered: {len(self._task_registry)}")

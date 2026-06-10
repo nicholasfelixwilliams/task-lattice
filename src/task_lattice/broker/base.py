@@ -27,6 +27,7 @@ class Broker(ABC):
 
     def connect_with_retry(self, config: BrokerConnectionConfig):
         """Connect to the broker with exponential backoff retry."""
+        log.info("Connecting to the broker...")
         attempt = 0
         max_label = str(config.max_retries) if config.max_retries != -1 else "∞"
 
