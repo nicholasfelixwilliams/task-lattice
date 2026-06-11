@@ -90,7 +90,7 @@ class Worker:
 
     async def _start(self):
         async with AsyncExitStack() as stack:
-            log.info("Starting worker process")
+            log.info("Starting task-lattice worker process...")
             self._broker.connect_with_retry(self._connection_config)
 
             if self._worker_lifecycle:
