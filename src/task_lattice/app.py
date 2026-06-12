@@ -98,6 +98,11 @@ class TaskLattice:
         task.queue = queue_name
         self.broker.publish(task, queue_config)
 
+    def enqueue_all(self, *tasks: TaskInstance, queue: str | None = None):
+        """Add all tasks for execution by workers."""
+        for task in tasks:
+            self.enqueue(task, queue)
+
     def start_worker(
         self,
         queues: list[str] | None = None,
