@@ -36,3 +36,13 @@ def test_enqueue_unknown_queue_raises(app: TaskLattice):
     instance = my_task.create()
     with pytest.raises(ValueError, match="not configured"):
         app.enqueue(instance, queue="nonexistent")
+
+
+def test_enqueue_all(app: TaskLattice):
+    @app.task
+    def my_task(): ...
+
+    instance_1 = my_task.create()
+    instance_2 = my_task.create()
+    instance_3 = my_task.create()
+    app.enqueue_all(instance_1, instance_2, instance_3)
